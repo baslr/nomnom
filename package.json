@@ -1,14 +1,19 @@
 {
-  "name": "nomnom",
+  "name": "nomnom-alive",
   "description": "Option parser with generated usage and commands",
-  "version": "1.8.1",
+  "version": "1.8.1-alive",
   "author": "Heather Arthur <fayearthur@gmail.com>",
+
+  "contributors": [{ "name" : "Manuel Baesler"
+  , "email" : "baslr.at.github@gmail.com"
+  , "url" : "https://github.com/baslr"
+  }],
   "scripts": {
     "test": "./node_modules/.bin/nodeunit test/*.js"
   },
   "repository": {
     "type": "git",
-    "url": "http://github.com/harthur/nomnom.git"
+    "url": "http://github.com/baslr/nomnom.git"
   },
   "main": "./nomnom",
   "keywords": [

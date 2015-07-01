@@ -121,9 +121,8 @@ ArgParser.prototype = {
   },
 
   parse : function(argv) {
-    this.print = this.print || function(str, code) {
+    this.print = this.print || function(str) {
       console.log(str);
-      process.exit(code || 0);
     };
     this._help = this._help || "";
     this._script = this._script || process.argv[0] + " "
@@ -219,7 +218,8 @@ ArgParser.prototype = {
     var positionals = [];
 
     /* parse the args */
-    var that = this;
+    var that    = this;
+    var bFailed = false;
     args.reduce(function(arg, val) {
       /* positional */
       if (arg.isValue) {
@@ -230,23 +230,24 @@ ArgParser.prototype = {
 
         /* -cfv */
         (arg.chars).forEach(function(ch) {
-          that.setOption(options, ch, true);
+          if (that.setOption(options, ch, true) ) bFailed = true;
         });
 
         /* -v key */
         if (!that.opt(last).flag) {
            if (val.isValue)  {
-              that.setOption(options, last, val.value);
+              if (that.setOption(options, last, val.value)) bFailed = true;
               return Arg(); // skip next turn - swallow arg
            }
            else {
               that.print("'-" + (that.opt(last).name || last) + "'"
                 + " expects a value\n\n" + that.getUsage(), 1);
+              bFailed = true;
            }
         }
         else {
           /* -v */
-          that.setOption(options, last, true);
+          if (that.setOption(options, last, true)) bFailed = true;
         }
 
       }
@@ -258,12 +259,13 @@ ArgParser.prototype = {
           /* --key value */
           if (!that.opt(arg.full).flag) {
             if (val.isValue) {
-              that.setOption(options, arg.full, val.value);
+              if (that.setOption(options, arg.full, val.value)) bFailed = true;
               return Arg();
             }
             else {
               that.print("'--" + (that.opt(arg.full).name || arg.full) + "'"
                 + " expects a value\n\n" + that.getUsage(), 1);
+              bFailed = true;
             }
           }
           else {
@@ -271,13 +273,16 @@ ArgParser.prototype = {
             value = true;
           }
         }
-        that.setOption(options, arg.full, value);
+        if (that.setOption(options, arg.full, value)) bFailed = true;
       }
       return val;
     });
 
+    if(bFailed) return;
+
+    var bFailed = false;
     positionals.forEach(function(pos, index) {
-      this.setOption(options, index, pos);
+      if (this.setOption(options, index, pos)) bFailed = true;
     }, this);
 
     options._ = positionals;
@@ -289,14 +294,18 @@ ArgParser.prototype = {
     }, this);
 
     // exit if required arg isn't present
+    var bFailed = false;
     this.specs.forEach(function(opt) {
       if (opt.required && options[opt.name] === undefined) {
          var msg = opt.name + " argument is required";
          msg = this._nocolors ? msg : chalk.red(msg);
 
          this.print("\n" + msg + "\n" + this.getUsage(), 1);
+         bFailed = true;
       }
     }, this);
+
+    if(bFailed) return;
 
     if (command && command.cb) {
       command.cb(options);
@@ -448,6 +457,7 @@ ArgParser.prototype.setOption = function(options, arg, value) {
 
     if (typeof message == "string") {
       this.print(message, 1);
+      return true;
     }
   }
 
@@ -466,6 +476,7 @@ ArgParser.prototype.setOption = function(options, arg, value) {
   var name = option.name || arg;
   if (option.choices && option.choices.indexOf(value) == -1) {
      this.print(name + " must be one of: " + option.choices.join(", "), 1);
+     return true;
   }
 
   if (option.list) {
@@ -479,6 +490,7 @@ ArgParser.prototype.setOption = function(options, arg, value) {
   else {
     options[name] = value;
   }
+  return false;
 };
 
 

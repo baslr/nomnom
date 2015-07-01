@@ -1,6 +1,8 @@
 # nomnom
 nomnom is an option parser for node. It noms your args and gives them back to you in a hash.
 
+This version keeps the process alive but does not call the callback if args cant be nomnomt.
+
 ```javascript
 var opts = require("nomnom")
    .option('debug', {
